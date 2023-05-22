@@ -1,177 +1,101 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from src.dataExploration import *
+[1470 rows x 41 columns]
+Classifier: LogisticRegression
+Average accuracy: 0.789795918367347
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split 
+              precision    recall  f1-score   support
 
-# Boolean switches
-doProfReports = False # generate profile reports
-doUnivariatePlots = False # make and save all univariate plots of features for yes/no attrition
-doBivariateCategorialPlots = False # do specific bivariate plots with 2xCategorical features
-doBivariateNumCatPlots = False # plot and save bivariate plots which are a combination of categorical and numeric features
+          No       0.93      0.79      0.86      1233
+         Yes       0.40      0.71      0.51       237
 
-# Load the CSV file
-df = pd.read_csv('data/Crayon_case_employee-attrition.csv')
-
-if doProfReports:
-    # Split into Attrition or not
-    dfAttrition = df[df['Attrition'] == 'Yes']
-    dfNoAttrition = df[df['Attrition'] == 'No']
-    createProfilingReports(df, dfAttrition, dfNoAttrition)
+    accuracy                           0.78      1470
+   macro avg       0.67      0.75      0.68      1470
+weighted avg       0.85      0.78      0.80      1470
 
 
-# Dropping unecessary features after looking at reports (constant values):
-df = df.drop(["EmployeeCount", "Over18", "StandardHours", "EmployeeNumber"], axis=1)
+Classifier: KNeighborsClassifier
+Average accuracy: 0.6380952380952382
 
-########################################################################
+              precision    recall  f1-score   support
 
-# DATA EXPORATION - CATEGORICAL AND NUMERIC SPLIT
+          No       0.92      0.64      0.75      1233
+         Yes       0.27      0.69      0.39       237
 
-# Get categorical and numeric feature names, also checks data types
-categoricalFeatureNames, numericalFeatureNames = categoricAndNumeric(df)
-
-# Have a look at the numeric data ranges etc
-for column in df[numericalFeatureNames].columns:
-    dfDescribe = df[column].describe()
-    #print(dfDescribe)
-    print("Min: {},\t Max: {},\t Range: {}, {}".format(dfDescribe['min'],dfDescribe['max'],dfDescribe['max']-dfDescribe['min'],column))
-
-########################################################################
-
-# DATA EXPORATION - PLOTTING
-
-# Plot and save all of the possible univariate plots
-if doUnivariatePlots:
-    univariatePlots(df, categoricalFeatureNames, numericalFeatureNames)
-
-# Do some bivariate plots:
-if doBivariateCategorialPlots:
-    bivariateCatPlots(df)
-if doBivariateNumCatPlots:
-    bivariateNumCatPlots(df)
+    accuracy                           0.65      1470
+   macro avg       0.59      0.67      0.57      1470
+weighted avg       0.81      0.65      0.69      1470
 
 
-# For general testing of plot types etc:
-#miscPlots(df)
+Classifier: RandomForestClassifier
+Average accuracy: 0.8666666666666666
 
-########################################################################
+              precision    recall  f1-score   support
 
-# FEATURE ENGINEERING
-# 
-# CORRELATION VALUES
+          No       0.88      0.98      0.93      1233
+         Yes       0.71      0.30      0.43       237
 
-# Generating average satisfaction new feature, and plot
-df['AverageSatisfaction'] = df[['EnvironmentSatisfaction', 'RelationshipSatisfaction', 'JobSatisfaction']].mean(axis=1)
-# Plot the new feature to have a look
-if 0:
-    plt.figure()
-    sns.histplot(x = df['AverageSatisfaction'], hue=df['Attrition'], 
-                stat = 'percent', shrink = 1.0, common_norm=False)
-
-    plt.show()
-
-# Generate the deviation for the mean salary at that particular job level
-df['SalaryDeviation'] = df['MonthlyIncome'] - df.groupby('JobLevel')['MonthlyIncome'].transform('mean')
-# Plot the new feature to have a look
-if 0:
-    plt.figure()
-    sns.histplot(x = df['SalaryDeviation'], hue=df['Attrition'],
-                stat = 'percent', shrink = 1.0, common_norm=False)
-    plt.show()
-
-# Update arrays with cat and numeric feature names:
-categoricalFeatureNames, numericalFeatureNames = categoricAndNumeric(df)
-
-########################################################################
-
-# FEATURE SELECTION
-# 
-# CORRELATION VALUES
-
-attritionCodes = (df["Attrition"].astype('category')).cat.codes
-print(attritionCodes)
-
-# Use corwith to measure the linear relationship between the numerical features
-# as a light guide to cross check with observations from plots
-# It is univariate and works only with numeric data
-correlationWithAttrition = abs(df[numericalFeatureNames].corrwith(attritionCodes))
-print(correlationWithAttrition.sort_values(ascending=False))
-"""
-OUTPUT:
-TotalWorkingYears           0.171063
-JobLevel                    0.169105
-YearsInCurrentRole          0.160545
-MonthlyIncome               0.159840
-Age                         0.159205
-YearsWithCurrManager        0.156199
-AverageSatisfaction         0.146819 -- New feature
-StockOptionLevel            0.137145
-YearsAtCompany              0.134392
-JobInvolvement              0.130016
-JobSatisfaction             0.103481 - Could drop if average satisfaction is better
-EnvironmentSatisfaction     0.103369 - Could drop if average satisfaction is better
-DistanceFromHome            0.077924
-WorkLifeBalance             0.063939
-TrainingTimesLastYear       0.059478
-DailyRate                   0.056652
-SalaryDeviation             0.054234 -- New feature
-RelationshipSatisfaction    0.045872 - Could drop if average satisfaction is better
-NumCompaniesWorked          0.043494
-YearsSinceLastPromotion     0.033019
-Education                   0.031373
-MonthlyRate                 0.015170 - Dropping
-PercentSalaryHike           0.013478
-EmployeeNumber              0.010577 - Dropping
-HourlyRate                  0.006846 - Dropping
-PerformanceRating           0.002889 - Dropping
-
-"""
-
-########################################################################
-
-# DATA MANIPULATION 
-
-# FIRST - Dropping some features after data exploration
-
-# Dropping department because it's well represented by job role
-df = df.drop(["Department"], axis=1)
-print(df.columns)
-
-# Dropping employee number for now because not correlated with anything
-df = df.drop(["EmployeeNumber"], axis=1)
-
-# Dropping monthly rate because low correlation and much more important monthly income 
-# is much higher correlated
-df = df.drop(["MonthlyRate"], axis=1)
-
-# Dropping monthly rate similar to above
-df = df.drop(["HourlyRate"], axis=1)
-
-# Dropping performance rating based on the plot (identical between attrition rates), and
-# also based on the simple corrwith
-df = df.drop(["PerformanceRating"], axis=1)
-
-# update the cat and num feature names lists
-categoricalFeatureNames, numericalFeatureNames = categoricAndNumeric(df)
+    accuracy                           0.87      1470
+   macro avg       0.80      0.64      0.68      1470
+weighted avg       0.85      0.87      0.84      1470
 
 
-########################################################################
+Feature Importance:
+['Age', 'DailyRate', 'DistanceFromHome', 'Education', 'EnvironmentSatisfaction', 'JobInvolvement', 'JobLevel', 'JobSatisfaction', 'MonthlyIncome', 'NumCompaniesWorked', 'PercentSalaryHike', 'RelationshipSatisfaction', 'StockOptionLevel', 'TotalWorkingYears', 'TrainingTimesLastYear', 'WorkLifeBalance', 'YearsAtCompany', 'YearsInCurrentRole', 'YearsSinceLastPromotion', 'YearsWithCurrManager', 'AverageSatisfaction', 'SalaryDeviation', 'BusinessTravel_Travel_Frequently', 'BusinessTravel_Travel_Rarely', 'EducationField_Life Sciences', 'EducationField_Marketing', 'EducationField_Medical', 'EducationField_Other', 'EducationField_Technical Degree', 'Gender_Male', 'JobRole_Human Resources', 'JobRole_Laboratory Technician', 'JobRole_Manager', 'JobRole_Manufacturing Director', 'JobRole_Research Director', 'JobRole_Research Scientist', 'JobRole_Sales Executive', 'JobRole_Sales Representative', 'MaritalStatus_Married', 'MaritalStatus_Single', 'OverTime_Yes']
+Sorted Feature Importance:
+                             Feature  Importance
+40                      OverTime_Yes    0.134039
+12                  StockOptionLevel    0.059479
+6                           JobLevel    0.046520
+39              MaritalStatus_Single    0.045185
+8                      MonthlyIncome    0.035482
+13                 TotalWorkingYears    0.033531
+19              YearsWithCurrManager    0.032203
+16                    YearsAtCompany    0.031886
+20               AverageSatisfaction    0.031342
+0                                Age    0.028640
+21                   SalaryDeviation    0.027069
+7                    JobSatisfaction    0.026793
+2                   DistanceFromHome    0.026318
+4            EnvironmentSatisfaction    0.025888
+17                YearsInCurrentRole    0.025704
+1                          DailyRate    0.024867
+38             MaritalStatus_Married    0.024091
+5                     JobInvolvement    0.023227
+14             TrainingTimesLastYear    0.022913
+9                 NumCompaniesWorked    0.022319
+29                       Gender_Male    0.021792
+18           YearsSinceLastPromotion    0.021481
+36           JobRole_Sales Executive    0.020622
+10                 PercentSalaryHike    0.020010
+15                   WorkLifeBalance    0.019839
+31     JobRole_Laboratory Technician    0.019077
+22  BusinessTravel_Travel_Frequently    0.018925
+3                          Education    0.017952
+24      EducationField_Life Sciences    0.017928
+11          RelationshipSatisfaction    0.016826
+26            EducationField_Medical    0.014592
+35        JobRole_Research Scientist    0.011716
+37      JobRole_Sales Representative    0.011597
+23      BusinessTravel_Travel_Rarely    0.009459
+25          EducationField_Marketing    0.007576
+33    JobRole_Manufacturing Director    0.007253
+28   EducationField_Technical Degree    0.007218
+30           JobRole_Human Resources    0.003420
+27              EducationField_Other    0.002625
+32                   JobRole_Manager    0.001737
+34         JobRole_Research Director    0.000862
+Classifier: SVC
+Average accuracy: 0.8312925170068027
 
-# SPLIT INTO TARGET (y_df) AND FEATURES (x_df)
+              precision    recall  f1-score   support
 
-# save features into x_df
-x_df = df.drop("Attrition", axis=1)
+          No       0.90      0.90      0.90      1233
+         Yes       0.49      0.50      0.50       237
 
-# Update categorical features list
-categoricalFeatureNames.remove('Attrition')
-print(categoricalFeatureNames)
+    accuracy                           0.84      1470
+   macro avg       0.70      0.70      0.70      1470
+weighted avg       0.84      0.84      0.84      1470
 
-# save target into y_df
-y_df = df["Attrition"]
-
+code used to generate:
 ########################################################################
 
 # BUILD PIPELINE FOR ENCODING, SCALING AND FEATURE SELECTION
@@ -357,6 +281,3 @@ ax.legend()
 plt.show()
 
 quit()
-
-
-   
