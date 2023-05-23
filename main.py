@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from src.dataExploration import *
-
+from src.dataManipulation import *
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split 
+
 
 # Boolean switches
 doProfReports = False # generate profile reports
@@ -59,40 +58,23 @@ if doBivariateNumCatPlots:
 
 ########################################################################
 
-# FEATURE ENGINEERING
+# DATA MANIPULATION - FEATURE ENGINEERING 
 # 
-# CORRELATION VALUES
-
-# Generating average satisfaction new feature, and plot
-df['AverageSatisfaction'] = df[['EnvironmentSatisfaction', 'RelationshipSatisfaction', 'JobSatisfaction']].mean(axis=1)
-# Plot the new feature to have a look
-if 0:
-    plt.figure()
-    sns.histplot(x = df['AverageSatisfaction'], hue=df['Attrition'], 
-                stat = 'percent', shrink = 1.0, common_norm=False)
-
-    plt.show()
-
-# Generate the deviation for the mean salary at that particular job level
-df['SalaryDeviation'] = df['MonthlyIncome'] - df.groupby('JobLevel')['MonthlyIncome'].transform('mean')
-# Plot the new feature to have a look
-if 0:
-    plt.figure()
-    sns.histplot(x = df['SalaryDeviation'], hue=df['Attrition'],
-                stat = 'percent', shrink = 1.0, common_norm=False)
-    plt.show()
+plotAverageSatisfaction = False
+plotSalaryDeviation = False
+# Make two new features
+df['AverageSatisfaction'], df['SalaryDeviation'] = featureEngineering(df, plotAverageSatisfaction, plotSalaryDeviation)
 
 # Update arrays with cat and numeric feature names:
 categoricalFeatureNames, numericalFeatureNames = categoricAndNumeric(df)
 
 ########################################################################
 
-# FEATURE SELECTION
-# 
-# CORRELATION VALUES
+# CORRELATION VALUES FOR INITAL FEATURE SELECTION
 
 attritionCodes = (df["Attrition"].astype('category')).cat.codes
 print(attritionCodes)
+
 
 # Use corwith to measure the linear relationship between the numerical features
 # as a light guide to cross check with observations from plots
@@ -132,31 +114,12 @@ PerformanceRating           0.002889 - Dropping
 
 ########################################################################
 
-# DATA MANIPULATION 
-
-# FIRST - Dropping some features after data exploration
-
-# Dropping department because it's well represented by job role
-df = df.drop(["Department"], axis=1)
+# DATA MANIPULATION - DROPPING FEATURES AFTER DATA EXPLORATION
 print(df.columns)
-
-# Dropping employee number for now because not correlated with anything
-df = df.drop(["EmployeeNumber"], axis=1)
-
-# Dropping monthly rate because low correlation and much more important monthly income 
-# is much higher correlated
-df = df.drop(["MonthlyRate"], axis=1)
-
-# Dropping monthly rate similar to above
-df = df.drop(["HourlyRate"], axis=1)
-
-# Dropping performance rating based on the plot (identical between attrition rates), and
-# also based on the simple corrwith
-df = df.drop(["PerformanceRating"], axis=1)
-
+df = dropFeatures(df)
 # update the cat and num feature names lists
 categoricalFeatureNames, numericalFeatureNames = categoricAndNumeric(df)
-
+print(df.columns)
 
 ########################################################################
 
@@ -191,10 +154,33 @@ from sklearn.svm import SVC
 from sklearn.metrics import roc_curve, roc_auc_score
 import matplotlib.pyplot as plt
 
-# Assuming you have X and y as your feature and target variables
-# Assuming you have separate lists num_features and cat_features containing the numerical and categorical feature names, respectively
 
-# Define the pipeline
+# Redefine categorical and numerical feature names so they are based on
+# whether they are actually categorical and numerical rather than on their
+# initial data types. this is important for SMOTE and standard sampling
+print(categoricalFeatureNames)
+print(numericalFeatureNames)
+print(len(categoricalFeatureNames), len(numericalFeatureNames))
+# List of categorical features that are in "numericalFeatureNames" just because
+# they were pre-encoded in the dataset
+moveToCategorical = ['Education', 'EnvironmentSatisfaction', 'JobInvolvement', 
+                     'JobLevel', 'JobSatisfaction', 'RelationshipSatisfaction',
+                      'StockOptionLevel',  'WorkLifeBalance']
+for featureName in moveToCategorical:
+    numericalFeatureNames.remove(featureName)
+    categoricalFeatureNames.append(featureName)
+print(len(categoricalFeatureNames), len(numericalFeatureNames))
+
+if 0:
+    # Test drops based on random forest feature importance
+    removeThese = ["EducationField", "Education", "RelationshipSatisfaction",
+                "JobSatisfaction", "WorkLifeBalance", "JobInvolvement"]
+    print(x_df.columns)
+    for featureName in removeThese:
+        x_df = x_df.drop([featureName], axis=1)
+        categoricalFeatureNames.remove(featureName)
+
+# Define the numerical pipeline
 numericalPipeline = Pipeline([
     ('scaler', StandardScaler())  # Numerical feature scaling
 ])
@@ -206,8 +192,8 @@ numericalPipeline = Pipeline([
 # one hot encoder: drop=first: "dummy variable trap" avoidance.
 preprocessor = ColumnTransformer([
     ('numerical', numericalPipeline, numericalFeatureNames),  # Apply scaling to numerical features
-    ('categorical', OneHotEncoder(drop='first'), categoricalFeatureNames)  # One-hot encode categorical features using pd.get_dummies()
-    #('categorical', OneHotEncoder(), categoricalFeatureNames)  # One-hot encode categorical features using pd.get_dummies()
+    ('categorical', OneHotEncoder(drop='first'), categoricalFeatureNames)  # One-hot encode categorical features 
+    #('categorical', OneHotEncoder(), categoricalFeatureNames)  # One-hot encode categorical features 
 ])
 
 
@@ -304,13 +290,11 @@ for classifier in classifiers:
         # Combine numerical and categorical feature names
         feature_names = numericalFeatureNames + encoded_feature_names.tolist()
 
-        print(feature_names)
-        #for feature_name, importance in zip(numericalFeatureNames + categoricalFeatureNames, feature_importances):
-        #    print(f"{feature_name}: {importance}")
         importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importances})
         importance_df = importance_df.sort_values('Importance', ascending=False)
         print("Sorted Feature Importance:")
-        print(importance_df)
+        #print(importance_df)
+        print(importance_df.to_string(index=False)) # to string to print every line
         #print("")
 
     #if isinstance(classifier, LogisticRegression) and hasattr(pipeline['classification'], 'coef_'):
@@ -329,7 +313,6 @@ plt.xlabel('Feature')
 plt.ylabel('Importance')
 plt.title('Sorted Feature Importance')
 plt.xticks(rotation=20, ha='right')
-plt.show()
 
 # Calculate the cumulative importance
 cumulative_importance = np.cumsum(importance_df['Importance'])
@@ -341,11 +324,8 @@ plt.xlabel('Feature')
 plt.ylabel('Cumulative Importance')
 plt.title('Cumulative Feature Importance')
 plt.xticks(rotation=20, ha='right')
-plt.show()
 
-quit()
-
-
+# Plot ROC Curve
 fig, ax = plt.subplots()
 ax.plot([0, 1], [0, 1], 'k--')  # Diagonal line for reference
 for fpr, tpr, _, model_name, auc in roc_data:

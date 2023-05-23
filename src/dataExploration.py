@@ -95,7 +95,7 @@ def bivariateCatPlots(df_):
         #['EducationField', 'JobRole'],
         #['Department', 'JobRole'],
         #['BusinessTravel', 'MaritalStatus'],
-        ['Attrition', 'JobRole']
+        ['JobLevel', 'JobRole']
         ]
 
     # plot the pairs of categorical features
@@ -108,22 +108,38 @@ def bivariateNumCatPlots(df_):
     # plot and save bivariate plots which are a combination of categorical and numeric features
 
     bivariateNumCatNames = [
-        ['EducationField', 'Education', 'Attrition'],
-        ['OverTime', 'MonthlyIncome', 'Attrition'],
-        ['JobLevel', 'MonthlyIncome', 'Attrition']
+        #['EducationField', 'Education', 'Attrition'],
+        #['OverTime', 'MonthlyIncome', 'Attrition'],
+        ['JobLevel', 'TotalWorkingYears', 'Attrition']
+        #['JobLevel', 'MonthlyIncome', 'Attrition'],
+        #['JobRole', 'MonthlyIncome', 'Attrition'],
+        #['JobRole', 'MonthlyIncome', 'JobLevel'],
+        #['JobRole', 'MonthlyIncome', 'Attrition']
         ]
     for item in bivariateNumCatNames:
         bivariatePlots_numerCateg(df_, item[0],item[1],item[2])
+        plt.xticks(rotation=20, ha='right')
 
     plt.show()
 
 def miscPlots(df_):
     
+    
+    plt.figure()
+    
+    df_["YearsOver18"] = df_["Age"]-18
     sns.histplot(
-        df_, x="Education", y="JobRole",
-        bins=30, discrete=(True, False)
+        df_, x="YearsOver18", 
+        bins=20, label="Years Over 18"
     )
+    sns.histplot(
+        df_, x="TotalWorkingYears", 
+        bins=20, label="Total Working Years"
+    )
+    plt.legend()
     plt.show()
+
+    
 
     #plt.figure()
     #sns.catplot(data=df, x="OverTime", y="WorkLifeBalance", hue="Attrition", kind="box")
