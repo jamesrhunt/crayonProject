@@ -1,0 +1,305 @@
+[1470 rows x 59 columns]
+Classifier: LogisticRegression
+Average accuracy: 0.7952380952380953
+
+              precision    recall  f1-score   support
+
+          No       0.94      0.81      0.87      1233
+         Yes       0.43      0.74      0.55       237
+
+    accuracy                           0.80      1470
+   macro avg       0.69      0.78      0.71      1470
+weighted avg       0.86      0.80      0.82      1470
+
+
+Classifier: KNeighborsClassifier
+Average accuracy: 0.5598639455782313
+
+              precision    recall  f1-score   support
+
+          No       0.91      0.52      0.66      1233
+         Yes       0.23      0.74      0.35       237
+
+    accuracy                           0.56      1470
+   macro avg       0.57      0.63      0.51      1470
+weighted avg       0.80      0.56      0.61      1470
+
+
+Classifier: RandomForestClassifier
+Average accuracy: 0.8639455782312926
+
+              precision    recall  f1-score   support
+
+          No       0.87      0.98      0.92      1233
+         Yes       0.75      0.25      0.37       237
+
+    accuracy                           0.87      1470
+   macro avg       0.81      0.62      0.65      1470
+weighted avg       0.85      0.87      0.84      1470
+
+
+Feature Importance:
+['Age', 'DailyRate', 'DistanceFromHome', 'MonthlyIncome', 'NumCompaniesWorked', 'PercentSalaryHike', 'TotalWorkingYears', 'TrainingTimesLastYear', 'YearsAtCompany', 'YearsInCurrentRole', 'YearsSinceLastPromotion', 'YearsWithCurrManager', 'AverageSatisfaction', 'SalaryDeviation', 'BusinessTravel_Travel_Frequently', 'BusinessTravel_Travel_Rarely', 'EducationField_Life Sciences', 'EducationField_Marketing', 'EducationField_Medical', 'EducationField_Other', 'EducationField_Technical Degree', 'Gender_Male', 'JobRole_Human Resources', 'JobRole_Laboratory Technician', 'JobRole_Manager', 'JobRole_Manufacturing Director', 'JobRole_Research Director', 'JobRole_Research Scientist', 'JobRole_Sales Executive', 'JobRole_Sales Representative', 'MaritalStatus_Married', 'MaritalStatus_Single', 'OverTime_Yes', 'Education_2', 'Education_3', 'Education_4', 'Education_5', 'EnvironmentSatisfaction_2', 'EnvironmentSatisfaction_3', 'EnvironmentSatisfaction_4', 'JobInvolvement_2', 'JobInvolvement_3', 'JobInvolvement_4', 'JobLevel_2', 'JobLevel_3', 'JobLevel_4', 'JobLevel_5', 'JobSatisfaction_2', 'JobSatisfaction_3', 'JobSatisfaction_4', 'RelationshipSatisfaction_2', 'RelationshipSatisfaction_3', 'RelationshipSatisfaction_4', 'StockOptionLevel_1', 'StockOptionLevel_2', 'StockOptionLevel_3', 'WorkLifeBalance_2', 'WorkLifeBalance_3', 'WorkLifeBalance_4']
+Sorted Feature Importance:
+                         Feature  Importance
+                    OverTime_Yes    0.112427
+              StockOptionLevel_1    0.047928
+            MaritalStatus_Single    0.047918
+                   MonthlyIncome    0.037375
+             AverageSatisfaction    0.036531
+                  YearsAtCompany    0.035919
+                             Age    0.035853
+               TotalWorkingYears    0.032759
+           MaritalStatus_Married    0.031798
+            YearsWithCurrManager    0.031133
+                      JobLevel_2    0.025731
+              YearsInCurrentRole    0.025661
+                 SalaryDeviation    0.024856
+                DistanceFromHome    0.023593
+              NumCompaniesWorked    0.023085
+                       DailyRate    0.022135
+               PercentSalaryHike    0.019742
+           TrainingTimesLastYear    0.019723
+               WorkLifeBalance_3    0.019425
+         YearsSinceLastPromotion    0.019184
+   JobRole_Laboratory Technician    0.018988
+                     Gender_Male    0.016720
+               JobSatisfaction_4    0.016589
+         JobRole_Sales Executive    0.015477
+       EnvironmentSatisfaction_4    0.013849
+          EducationField_Medical    0.013708
+                JobInvolvement_3    0.012650
+                     Education_3    0.012609
+BusinessTravel_Travel_Frequently    0.012292
+    EducationField_Life Sciences    0.012110
+       EnvironmentSatisfaction_3    0.011469
+      RelationshipSatisfaction_4    0.010980
+      JobRole_Research Scientist    0.009879
+               JobSatisfaction_3    0.009737
+               WorkLifeBalance_2    0.009732
+              StockOptionLevel_2    0.009496
+                     Education_4    0.009218
+      RelationshipSatisfaction_3    0.008673
+                JobInvolvement_2    0.008461
+       EnvironmentSatisfaction_2    0.007866
+    BusinessTravel_Travel_Rarely    0.007344
+                     Education_2    0.007020
+                      JobLevel_3    0.006901
+    JobRole_Sales Representative    0.006781
+ EducationField_Technical Degree    0.006701
+  JobRole_Manufacturing Director    0.006474
+               JobSatisfaction_2    0.006150
+      RelationshipSatisfaction_2    0.006062
+        EducationField_Marketing    0.005052
+                JobInvolvement_4    0.004968
+               WorkLifeBalance_4    0.004803
+         JobRole_Human Resources    0.003311
+              StockOptionLevel_3    0.003242
+            EducationField_Other    0.002698
+                 JobRole_Manager    0.002482
+                      JobLevel_4    0.002151
+                     Education_5    0.001861
+       JobRole_Research Director    0.001721
+                      JobLevel_5    0.000998
+Classifier: SVC
+Average accuracy: 0.8537414965986393
+
+              precision    recall  f1-score   support
+
+          No       0.91      0.92      0.91      1233
+         Yes       0.54      0.51      0.52       237
+
+    accuracy                           0.85      1470
+   macro avg       0.72      0.71      0.72      1470
+weighted avg       0.85      0.85      0.85      1470
+
+code used to generate:
+########################################################################
+
+# BUILD PIPELINE FOR ENCODING, SCALING AND FEATURE SELECTION
+
+from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline as ImbPipeline
+from sklearn.compose import ColumnTransformer
+from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+import pandas as pd
+from sklearn.model_selection import cross_val_score, cross_val_predict
+from sklearn.metrics import classification_report
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+from sklearn.metrics import roc_curve, roc_auc_score
+import matplotlib.pyplot as plt
+
+
+# Redefine categorical and numerical feature names so they are based on
+# whether they are actually categorical and numerical rather than on their
+# initial data types. this is important for SMOTE and standard sampling
+print(categoricalFeatureNames)
+print(numericalFeatureNames)
+print(len(categoricalFeatureNames), len(numericalFeatureNames))
+# List of categorical features that are in "numericalFeatureNames" just because
+# they were pre-encoded in the dataset
+moveToCategorical = ['Education', 'EnvironmentSatisfaction', 'JobInvolvement', 
+                     'JobLevel', 'JobSatisfaction', 'RelationshipSatisfaction',
+                      'StockOptionLevel',  'WorkLifeBalance']
+for featureName in moveToCategorical:
+    numericalFeatureNames.remove(featureName)
+    categoricalFeatureNames.append(featureName)
+print(len(categoricalFeatureNames), len(numericalFeatureNames))
+
+
+
+# Define the numerical pipeline
+numericalPipeline = Pipeline([
+    ('scaler', StandardScaler())  # Numerical feature scaling
+])
+
+# First, we define the preprocessing steps in the preprocessor object. 
+# It consists of a ColumnTransformer with two transformers: 
+# numericalPipeline for scaling numerical features and OneHotEncoder() 
+# for one-hot encoding categorical features.
+# one hot encoder: drop=first: "dummy variable trap" avoidance.
+preprocessor = ColumnTransformer([
+    ('numerical', numericalPipeline, numericalFeatureNames),  # Apply scaling to numerical features
+    ('categorical', OneHotEncoder(drop='first'), categoricalFeatureNames)  # One-hot encode categorical features 
+    #('categorical', OneHotEncoder(), categoricalFeatureNames)  # One-hot encode categorical features 
+])
+
+
+# (use imb pipeline for SMOTE)
+# The preprocessor is then included as part of the pipeline 
+# along with other steps such as SMOTE oversampling and a 
+# placeholder for the classification model.
+pipeline = ImbPipeline([
+    ('preprocessing', preprocessor),  # Preprocessing with separate transformations
+    ('sampling', SMOTE()),  # Apply SMOTE for oversampling
+    ('classification', None)  # Placeholder for the classification model
+])
+
+
+
+
+# Take a look at x_df after just the transformation step:
+x_transformed = preprocessor.fit_transform(x_df)
+print("Transformed Data:")
+# Get the encoded feature names 
+# Why tranformers [1][1]:
+# first [1] to access second transformer in prepocessing (one hot encoding)
+# second [1] because the information is stored as [transformer name, actual transformer]
+encoded_feature_names = preprocessor.transformers_[1][1].get_feature_names_out()
+# Combine numerical and categorical feature names
+feature_names = numericalFeatureNames + encoded_feature_names.tolist()
+#print(feature_names)
+df_transformed =  pd.DataFrame(x_transformed, columns=feature_names)
+print(df_transformed)
+
+# having a quick look at the profiling report for the transformed data
+if 0:
+    from ydata_profiling import ProfileReport
+    profile = ProfileReport(df_transformed, title="df_transformed")
+    profile.to_file("data/reports/df_transformed.html")
+
+
+
+
+
+
+# Define the list of classifiers to evaluate
+classifiers = [
+    LogisticRegression(max_iter=500),
+    KNeighborsClassifier(n_neighbors=5),
+    RandomForestClassifier(n_estimators=500),
+    SVC(probability=True)
+]
+
+roc_data = []
+
+
+# Next, we iterate over the classifiers in the classifiers list and 
+# evaluate their performance using cross-validation. For each classifier,
+# we set the current classifier in the pipeline using 
+# pipeline.set_params(classification=classifier).
+
+
+for classifier in classifiers:
+    pipeline.set_params(classification=classifier)  # Set the current classifier
+    scores = cross_val_score(pipeline, x_df, y_df, cv=5)  # Perform cross-validation
+    print(f"Classifier: {classifier.__class__.__name__}")
+    print(f"Average accuracy: {scores.mean()}")
+    print("")
+    # Perform cross-validation and get predicted labels (stratify by default)
+    y_pred = cross_val_predict(pipeline, x_df, y_df, cv=5)      
+    report = classification_report(y_df, y_pred)  # Generate classification report
+    print(report)
+    print("")
+
+    # ROC curve
+    # get the predicted probabilities for each data point
+    y_scores = cross_val_predict(pipeline, x_df, y_df, cv=5, method='predict_proba')[:, 1] 
+    # using pos_label = yes so that roc_curve understands 
+    fpr, tpr, thresholds = roc_curve(y_df, y_scores,pos_label='Yes')
+    auc = roc_auc_score(y_df, y_scores)
+    roc_data.append((fpr, tpr, thresholds, classifier.__class__.__name__, auc))
+    
+    
+    # Fit the pipeline to the entire dataset (x_df and y_df) to 
+    # obtain feature importance and coefficient analysis if supported by the classifier
+    pipeline.fit(x_df, y_df)
+    
+
+    if isinstance(classifier, RandomForestClassifier) and hasattr(classifier, 'feature_importances_'):
+        print("Feature Importance:")
+
+        #access the feature_importances_ attribute of the classifier  
+        feature_importances = classifier.feature_importances_
+        
+        # Get the encoded feature names from the preprocessor step:
+        encoded_feature_names = pipeline['preprocessing'].transformers_[1][1].get_feature_names_out()
+
+        # Combine numerical and categorical feature names
+        feature_names = numericalFeatureNames + encoded_feature_names.tolist()
+
+        print(feature_names)
+        #for feature_name, importance in zip(numericalFeatureNames + categoricalFeatureNames, feature_importances):
+        #    print(f"{feature_name}: {importance}")
+        importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importances})
+        importance_df = importance_df.sort_values('Importance', ascending=False)
+        print("Sorted Feature Importance:")
+        #print(importance_df)
+        print(importance_df.to_string(index=False)) # to string to print every line
+        #print("")
+
+    #if isinstance(classifier, LogisticRegression) and hasattr(pipeline['classification'], 'coef_'):
+    #    print("Coefficient Analysis:")
+    #    coefficients = pipeline['classification'].coef_
+    #    feature_names = numericalFeatureNames + categoricalFeatureNames
+    #    coefficients_df = pd.DataFrame({'Feature': feature_names, 'Coefficient': coefficients[0]})
+    #    coefficients_df = coefficients_df.sort_values('Coefficient', ascending=False)
+    #    print(coefficients_df)
+    #    print("")
+plt.figure()
+# Plot the sorted DataFrame using a bar chart
+plt.figure(figsize=(10, 6))
+plt.bar(importance_df['Feature'], importance_df['Importance'])
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.title('Sorted Feature Importance')
+plt.xticks(rotation=20, ha='right')
+plt.show()
+
+# Calculate the cumulative importance
+cumulative_importance = np.cumsum(importance_df['Importance'])
+
+# Plot the cumulative importance using a line plot
+plt.figure(figsize=(10, 6))
+plt.plot(importance_df['Feature'], cumulative_importance)
+plt.xlabel('Feature')
+plt.ylabel('Cumulative Importance')
+plt.title('Cumulative Feature Importance')
+plt.xticks(rotation=20, ha='right')
+plt.show()
+
+quit()
