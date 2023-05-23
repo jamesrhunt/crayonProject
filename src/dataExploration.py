@@ -85,7 +85,7 @@ def bivariatePlots_numerCateg(df_, catFeat1_, numFeat_, catFeat2_):
     sns.catplot(data=df_, x=catFeat1_, y=numFeat_, hue=catFeat2_, kind="box")
     plt.savefig("data/plots/dataExploration/categorical/bivariate/bivarPlot_Numcat"\
                 +catFeat1_+"_"+numFeat_+"_"+catFeat2_+".png")
-    
+     
 def bivariateCatPlots(df_):
     # Plot and save specific categorical plots
 

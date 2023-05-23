@@ -134,7 +134,7 @@ print(categoricalFeatureNames)
 
 # save target into y_df
 y_df = df["Attrition"]
-
+ 
 ########################################################################
 
 # BUILD PIPELINE FOR ENCODING, SCALING AND FEATURE SELECTION

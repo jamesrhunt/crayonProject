@@ -20,7 +20,7 @@ def featureEngineering(df_, plotAvg, plotSal):
         plt.show()
 
     return df_['AverageSatisfaction'], df_['SalaryDeviation']
-
+ 
 def dropFeatures(df_):
     # FIRST - Dropping some features after data exploration
 
