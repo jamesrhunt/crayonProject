@@ -9,8 +9,8 @@ from sklearn.preprocessing import StandardScaler
 # Boolean switches
 doProfReports = False # generate profile reports
 doUnivariatePlots = False # make and save all univariate plots of features for yes/no attrition
-doBivariateCategorialPlots = True # do specific bivariate plots with 2xCategorical features
-doBivariateNumCatPlots = True # plot and save bivariate plots which are a combination of categorical and numeric features
+doBivariateCategorialPlots = False # do specific bivariate plots with 2xCategorical features
+doBivariateNumCatPlots = False # plot and save bivariate plots which are a combination of categorical and numeric features
 
 # Load the CSV file
 df = pd.read_csv('data/Crayon_case_employee-attrition.csv')
@@ -136,6 +136,15 @@ categoricalFeatureNames.remove('Attrition')
 
 # save target into y_df
 y_df = df["Attrition"]
+
+
+from sklearn.preprocessing import LabelEncoder
+
+# encode target variable into 0s and 1s rather than Yes or Nos
+# (numeric labels)
+
+label_encoder = LabelEncoder()
+y_df = label_encoder.fit_transform(y_df)
  
 
 # Redefine categorical and numerical feature names so they are based on
@@ -155,7 +164,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve, roc_auc_score, make_scorer
+from sklearn.model_selection import GridSearchCV
+
 
 if 0:
     # Test drops based on random forest feature importance
@@ -169,9 +180,12 @@ if 0:
 # build pipeline
 pipeline, preprocessor = buildPipeline(categoricalFeatureNames, numericalFeatureNames)
 
-
 # Take a look at x_df after the transformation step:
 if 0:
+    # Set the display option to show all rows
+    pd.set_option('display.max_rows', None)
+    # Set the display option to show all columns
+    pd.set_option('display.max_columns', None)
     check_x_transformed(x_df, preprocessor, numericalFeatureNames)
 
 
@@ -183,6 +197,65 @@ classifiers = [
     RandomForestClassifier(n_estimators=500),
     SVC(probability=True)
 ]
+
+########################################################################
+
+# HYPER PARAMETER TUNING
+
+hyperparameters = [
+    {
+        'classification__C': [0.1, 1, 10],
+        'classification__penalty': ['l1', 'l2'],
+        'classification__solver': ['newton-cg', 'lbfgs'] #trying two solvers because lbfgs doesn't work for l1 penalty (lasso)
+    },
+    {
+        'classification__n_neighbors': [3, 5, 7, 9, 11, 13, 15, 17, 19]
+    },
+    {
+        'classification__n_estimators': [100, 200, 500]
+    },
+    {
+        'classification__C': [0.1, 1, 10],
+        'classification__kernel': ['linear', 'rbf']
+    }
+]
+
+
+roc_data = []
+for i, classifier in enumerate(classifiers):
+    print(f"Classifier: {classifier.__class__.__name__}")
+    pipeline.set_params(classification=classifier)  # Set the current classifier
+
+    # Define the grid search with the classifier's hyperparameters and cross-validation
+    grid_search = GridSearchCV(pipeline, hyperparameters[i], scoring=make_scorer(roc_auc_score), cv=5)
+    
+    # Perform grid search to find the best hyperparameters
+    grid_search.fit(x_df, y_df)
+    
+    # Get the best classifier with tuned hyperparameters
+    best_classifier = grid_search.best_estimator_
+    
+    # Print the best hyperparameters and corresponding score
+    print(f"Best Hyperparameters: {grid_search.best_params_}")
+    print(f"Best AUC Score: {grid_search.best_score_}")
+    print("")
+    
+    # Perform cross-validation and get predicted labels using the best classifier
+    y_pred = cross_val_predict(best_classifier, x_df, y_df, cv=5)
+    report = classification_report(y_df, y_pred)  # Generate classification report
+    print(report)
+    print("")
+    
+    # Perform ROC curve analysis using the best classifier
+    y_scores = cross_val_predict(best_classifier, x_df, y_df, cv=5, method='predict_proba')[:, 1] 
+    fpr, tpr, thresholds = roc_curve(y_df, y_scores, pos_label=1)
+    auc = roc_auc_score(y_df, y_scores)
+    roc_data.append((fpr, tpr, thresholds, classifier.__class__.__name__, auc))
+
+
+plotROC(roc_data)
+
+quit()
 
 ########################################################################
 
@@ -212,7 +285,7 @@ for classifier in classifiers:
     # get the predicted probabilities for each data point
     y_scores = cross_val_predict(pipeline, x_df, y_df, cv=5, method='predict_proba')[:, 1] 
     # using pos_label = yes so that roc_curve understands 
-    fpr, tpr, thresholds = roc_curve(y_df, y_scores,pos_label='Yes')
+    fpr, tpr, thresholds = roc_curve(y_df, y_scores,pos_label=1)
     auc = roc_auc_score(y_df, y_scores)
     roc_data.append((fpr, tpr, thresholds, classifier.__class__.__name__, auc))
     
@@ -255,7 +328,7 @@ if 0:
     plotRandomForestImportance(importance_df)
 
 # Plot ROC Curve
-if 1:
+if 0:
     plotROC(roc_data)
 
 quit()

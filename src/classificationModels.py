@@ -76,7 +76,8 @@ def check_x_transformed(x_df_,preprocessor_, numericalFeatureNames_):
     feature_names = numericalFeatureNames_ + encoded_feature_names.tolist()
     #print(feature_names)
     df_transformed =  pd.DataFrame(x_transformed, columns=feature_names)
-    print(df_transformed)
+    print(df_transformed.head(1))
+    print(df_transformed.dtypes)
 
     # having a quick look at the profiling report for the transformed data
     if 0:
