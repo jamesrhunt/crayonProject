@@ -9,8 +9,8 @@ from sklearn.preprocessing import StandardScaler
 # Boolean switches
 doProfReports = False # generate profile reports
 doUnivariatePlots = False # make and save all univariate plots of features for yes/no attrition
-doBivariateCategorialPlots = False # do specific bivariate plots with 2xCategorical features
-doBivariateNumCatPlots = False # plot and save bivariate plots which are a combination of categorical and numeric features
+doBivariateCategorialPlots = True # do specific bivariate plots with 2xCategorical features
+doBivariateNumCatPlots = True # plot and save bivariate plots which are a combination of categorical and numeric features
 
 # Load the CSV file
 df = pd.read_csv('data/Crayon_case_employee-attrition.csv')

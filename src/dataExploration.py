@@ -95,7 +95,7 @@ def bivariateCatPlots(df_):
         #['EducationField', 'JobRole'],
         #['Department', 'JobRole'],
         #['BusinessTravel', 'MaritalStatus'],
-        ['JobLevel', 'JobRole']
+        ['OverTime', 'JobRole']
         ]
 
     # plot the pairs of categorical features
@@ -110,11 +110,11 @@ def bivariateNumCatPlots(df_):
     bivariateNumCatNames = [
         #['EducationField', 'Education', 'Attrition'],
         #['OverTime', 'MonthlyIncome', 'Attrition'],
-        ['JobLevel', 'TotalWorkingYears', 'Attrition']
+        #['MaritalStatus', 'Age', 'Attrition']
         #['JobLevel', 'MonthlyIncome', 'Attrition'],
         #['JobRole', 'MonthlyIncome', 'Attrition'],
         #['JobRole', 'MonthlyIncome', 'JobLevel'],
-        #['JobRole', 'MonthlyIncome', 'Attrition']
+        ['JobRole', 'MonthlyIncome', 'Attrition']
         ]
     for item in bivariateNumCatNames:
         bivariatePlots_numerCateg(df_, item[0],item[1],item[2])
