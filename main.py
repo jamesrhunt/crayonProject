@@ -204,11 +204,12 @@ if 0:
 # select classifiers and hyperparameters with an array:
 # 0: , 1: KNN, 2: randomForest, 3: SVC   -- e.g. [1,3] KNN+SVC
 #classifiers, hyperparameters = getClassAndHyp(models_=[0,1,2,3])
-classifiers, hyperparameters = getClassAndHyp(models_=[0])
+classifiers, hyperparameters = getClassAndHyp(models_=[0,1])
 
 
 print("\n\n\n\nRunning now")
 roc_data = []
+reportData = []
 for i, classifier in enumerate(classifiers):
     print(f"Classifier: {classifier.__class__.__name__}")
     pipeline.set_params(classification=classifier)  # Set the current classifier
@@ -235,6 +236,8 @@ for i, classifier in enumerate(classifiers):
     report = classification_report(y_df, y_pred)  # Generate classification report
     print(report)
     print("")
+
+    reportData.append((classifier.__class__.__name__, report, best_classifier))
         
     # Perform ROC curve analysis using the best classifier
     y_scores = cross_val_predict(best_classifier, x_df, y_df, cv=5, method='predict_proba')[:, 1] 
@@ -255,6 +258,7 @@ for i, classifier in enumerate(classifiers):
 
 plotROC(roc_data)
 
+print(reportData)
 quit()
 
 ########################################################################

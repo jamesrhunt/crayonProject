@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# Import statements required for Plotly 
+import plotly.offline as py
+import plotly.graph_objs as go
+#import plotly.tools as tls
 
 def createProfilingReports(df, dfAttrition, dfNoAttrition):
     from ydata_profiling import ProfileReport
@@ -43,7 +47,32 @@ def categoricAndNumeric(df):
     
     return categoricalFeatureNames_, numericalFeatureNames_
     
+def plotCorrelationMatrix(df_, numericalFeatureNames_):
+    # plot a correlation matrix   
+    data = [
+        go.Heatmap(
+            z = df_[numericalFeatureNames_].astype(float).corr().values, # Generate Pearson correlation
+            x = df_[numericalFeatureNames_].columns.values,
+            y = df_[numericalFeatureNames_].columns.values,
+            colorscale='Viridis',
+            reversescale = False,
+    #         text = True ,
+            opacity = 1.0
+        )
+    ]
+    
+    layout = go.Layout(
+        title='Pearson Correlation of numerical features',
+        xaxis = dict(ticks='', nticks=36),
+        yaxis = dict(ticks='' ),
+        width = 900, height = 700,
+        
+    )
 
+    # using py.iplot to generate interactive plot in browser or notebook
+    fig = go.Figure(data=data, layout=layout)
+    py.iplot(fig, filename='labelled-heatmap')
+    
 
 def univariatePlots(df_, categoricalFeatureNames_, numericalFeatureNames_):
 
@@ -121,6 +150,20 @@ def bivariateNumCatPlots(df_):
         plt.xticks(rotation=20, ha='right')
 
     plt.show()
+
+def correlationPlots(df_):
+    feature1_ = 'Age'
+    feature2_ = 'DailyRate'
+    plt.figure()
+    cmap = sns.cubehelix_palette(start=0.333333333333, light=1, as_cmap=True)
+    # Generate and plot
+    x = df_[feature1_].values
+    y = df_[feature2_].values
+    sns.kdeplot(data=df_, x='Age', y='DailyRate', cmap=cmap, shade=True)
+    plt.legend()
+    plt.show()
+    plt.savefig("data/plots/dataExploration/heatmap"\
+                +feature1_+"_"+feature2_+"_.png")
 
 def miscPlots(df_):
     

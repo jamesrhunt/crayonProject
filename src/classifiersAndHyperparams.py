@@ -37,7 +37,8 @@ def getClassAndHyp(models_=None):
         },
         {
             'classification__C': [0.01, 0.1, 1, 10], # regularisation based on misclassification and margin width
-            'classification__kernel': ['linear', 'rbf'] # kernel used to transform, rbf: guassian better for non-linear
+            'classification__kernel': ['linear', 'rbf'], # kernel used to transform, rbf: guassian better for non-linear
+            'classification__weights': ['none', 'balanced'] # add weights to correct unbalanced data set
         }
     ]
 
