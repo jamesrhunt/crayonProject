@@ -109,7 +109,7 @@ attritionCodes = (df["Attrition"].astype('category')).cat.codes
 print("\n\nAttrition Codes:")
 print(attritionCodes)
 
-
+ 
 # Use corwith to measure the linear relationship between the numerical features
 # as a light guide to cross check with observations from plots
 # It is univariate and works only with numeric data

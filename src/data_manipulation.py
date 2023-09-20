@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 def featureEngineering(df_, plotAvg, plotSal):
     # Generating average satisfaction new feature, and plot
     df_['AverageSatisfaction'] = df_[['EnvironmentSatisfaction', 'RelationshipSatisfaction', 'JobSatisfaction']].mean(axis=1)

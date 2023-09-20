@@ -7,7 +7,7 @@ import seaborn as sns
 import plotly.offline as py
 import plotly.graph_objs as go
 #import plotly.tools as tls
-
+ 
 def create_profiling_reports(df, dfAttrition, dfNoAttrition):
     from ydata_profiling import ProfileReport
     
