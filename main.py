@@ -10,6 +10,7 @@ from sklearn.model_selection import cross_val_score, cross_val_predict
 from sklearn.metrics import classification_report, recall_score, roc_curve, \
     roc_auc_score, make_scorer, precision_score, f1_score # pylint: disable=W0611
 from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestClassifier # for importance reporting
 
 import src.classifiers_and_hyperparams as classifiers_and_hyperparams
 import src.data_exploration as data_exploration
@@ -103,7 +104,9 @@ categoricalFeatureNames, numericalFeatureNames = data_exploration.categoricAndNu
 
 # CORRELATION VALUES FOR INITAL FEATURE SELECTION
 
+# Convert attrition labels to 1s and 0s:
 attritionCodes = (df["Attrition"].astype('category')).cat.codes
+print("\n\nAttrition Codes:")
 print(attritionCodes)
 
 
@@ -180,7 +183,7 @@ if VIEW_XDF_TRANSFORMED:
 
 
 # select classifiers and hyperparameters with an array:
-# 0: , 1: KNN, 2: randomForest, 3: SVC   -- e.g. [1,3] KNN+SVC
+# 0: logistic regression, 1: KNN, 2: randomForest, 3: SVC   -- e.g. [1,3] KNN+SVC
 #classifiers, hyperparameters = getClassAndHyp(models_=[0,1,2,3])
 classifiers, hyperparameters = classifiers_and_hyperparams.getClassAndHyp(models_=[2])
 
@@ -247,31 +250,19 @@ for i, classifier in enumerate(classifiers):
         print("AUC scores for each fold:", scores)
         print("Mean AUC score:", np.mean(scores))
 
-    
+
     #############################################
-    from sklearn.ensemble import RandomForestClassifier
+    
     # if we're at the randomforestclassifier, get the feature importances:
     print("\n\n\n\n trying feature importance \n\n\n")
     
     if isinstance(classifier, RandomForestClassifier):
         print("Feature Importance:")
-        # fit random forest classifier to get access to feature importances
-        pipeline.fit(x_df, y_df)
-        #access the feature_importances_ attribute of the classifier  
-        feature_importances = classifier.feature_importances_
-        
-        # Get the encoded feature names from the preprocessor step:
-        encoded_feature_names = preprocessor.transformers_[1][1].get_feature_names_out()
+        importance_df = classification_models.random_forest_importance(
+            classifier, numericalFeatureNames, pipeline, preprocessor, x_df, y_df
+            )
+        classification_models.plot_ranfor_importance(importance_df)
 
-        # Combine numerical and categorical feature names
-        feature_names = numericalFeatureNames + encoded_feature_names.tolist()
-
-        importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importances})
-        importance_df = importance_df.sort_values('Importance', ascending=False)
-        print("Sorted Feature Importance:")
-        #print(importance_df)
-        print(importance_df.to_string(index=False)) # to string to print every line
-        #print("")
     #############################################
 
 classification_models.plotROC(roc_data)

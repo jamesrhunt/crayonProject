@@ -87,11 +87,37 @@ def check_x_transformed(x_df_,preprocessor_, numericalFeatureNames_):
 
 ########################################
 
+# RANDOM FOREST IMPORTANCE
+
+def random_forest_importance(classifier_, numericalFeatureNames_, pipeline_,\
+                             preprocessor_, x_df_, y_df_):
+    # fit random forest classifier to get access to feature importances
+    pipeline_.fit(x_df_, y_df_)
+    #access the feature_importances_ attribute of the classifier  
+    feature_importances = classifier_.feature_importances_
+    
+    # Get the encoded feature names from the preprocessor step:
+    encoded_feature_names = preprocessor_.transformers_[1][1].get_feature_names_out()
+
+    # Combine numerical and categorical feature names
+    feature_names = numericalFeatureNames_ + encoded_feature_names.tolist()
+
+    importance_df_ = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importances})
+    importance_df_ = importance_df_.sort_values('Importance', ascending=False)
+    print("Sorted Feature Importance:")
+    #print(importance_df)
+    print(importance_df_.to_string(index=False)) # to string to print every line
+    #print("")
+    return(importance_df_)
+
+
+########################################
+
 
 
 # PLOTTING FUNCTIONS
 
-def plotRandomForestImportance(importance_df_):
+def plot_ranfor_importance(importance_df_):
     plt.figure()
     # Plot the sorted DataFrame using a bar chart
     plt.figure(figsize=(10, 6))

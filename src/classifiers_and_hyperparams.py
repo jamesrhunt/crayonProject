@@ -54,7 +54,7 @@ def getClassAndHyp(models_=None):
             # add weights to correct unbalanced data set
         }
     ]
-
+    
     # simple random forest hyperparameters for making feature importance work
     hyperparameters_ = [
         {
@@ -91,7 +91,7 @@ def getClassAndHyp(models_=None):
             # add weights to correct unbalanced data set
         }
     ]
-
+    
         # Filter the classifiers and hyperparameters based on the provided classes and hyperparameters
     if models_ is not None:
         classifiers_ = [classifiers_[i] for i in models_]
