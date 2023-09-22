@@ -18,8 +18,10 @@ import src.data_manipulation as data_manipulation
 import src.classification_models as classification_models
 
 
-
+###################################
 # Boolean switches
+###################################
+# Data Exploration:
 DO_PROF_REPORTS = False # generate profile reports
 DO_UNIVARIATE_PLOTS = False # make and save all univariate plots of features for yes/no attrition
 DO_BIVARIATE_CATEGORICAL_PLOTS = False # do specific bivariate plots with 2xCategorical features
@@ -28,30 +30,45 @@ DO_BIVARIATE_NUM_CAT_PLOTS = False # plot and save bivariate plots which
 DO_HEATMAP_PLOTS = False # plot heatmap plots to see correlations between features
 DO_CORRELATION_MATRIX = False # plot a correlation matrix
 DO_MISC_PLOTS = False # Extra space for making miscellaneous plots
-#
+###################################
+#        Data Manipulation:
+# Feature Engineering:
+PLOT_AVERAGE_SATISFACTION = False # Plot new feature, AverageSatisfaction 
+PLOT_SALARY_DEVIATION = False # Plot new feature, SalaryDeviation
+# Feature Selection:
+CHECK_LINEAR_CORRELATION = False # calculate and print linear correlation of
+#                               numerical features and attrition
+
+
 TEST_DROPS = False # try dropping some features from the data set
 #
 VIEW_XDF_TRANSFORMED = False # look at x_df after it has been transformed in the pipeline
 XDF_TRANSFORMED_REPORT = False # generate a profile report of the transformed x_df
-
+###################################
 # Pipeline building:
 
 # Set to 'first' when wanting to drop the first column
 # during one hot encoding, otherwise = None:
 ONEHOT_DROP = None # 'first'
-
-# Running classification models
+###################################
+# Running classification models:
 DO_ROC_ANALYSIS = True # perform roc analysis of each classifier
+###################################
+
 
 # Load the CSV file
 df = pd.read_csv('data/Crayon_case_employee-attrition.csv')
 
+########################################################################
+
+# DATA EXPORATION -
+# GENERATE PROFILE REPORTS AND DROPPING FIRST FEATURES
+
 if DO_PROF_REPORTS:
-    # Split into Attrition or not
+    # Split based on attrition yes/no then generate profile reports.
     df_attrition = df[df['Attrition'] == 'Yes']
     df_no_attrition = df[df['Attrition'] == 'No']
     data_exploration.create_profiling_reports(df, df_attrition, df_no_attrition)
-
 
 
 # Dropping unecessary features after looking at reports (constant values):
@@ -59,7 +76,8 @@ df = df.drop(["EmployeeCount", "Over18", "StandardHours", "EmployeeNumber"], axi
 
 ########################################################################
 
-# DATA EXPORATION - CATEGORICAL AND NUMERIC SPLIT
+# DATA EXPORATION -
+# CATEGORICAL AND NUMERIC SPLIT
 
 # Get categorical and numeric feature names, also checks data types
 categorical_feature_names, numerical_feature_names = \
@@ -74,7 +92,8 @@ for column in df[numerical_feature_names].columns:
 
 ########################################################################
 
-# DATA EXPORATION - PLOTTING
+# DATA EXPORATION -
+# PLOTTING
 
 # Plot and save all of the possible univariate plots
 if DO_UNIVARIATE_PLOTS:
@@ -102,43 +121,48 @@ if DO_MISC_PLOTS:
 
 ########################################################################
 
-# DATA MANIPULATION - FEATURE ENGINEERING
+# DATA MANIPULATION -
+# FEATURE ENGINEERING
 #
-PLOT_AVERAGE_SATISFACTION = False
-PLOT_SALARY_DEVIATION = False
+
 # Make two new features
 df['AverageSatisfaction'], df['SalaryDeviation'] = \
-    data_manipulation.featureEngineering(df, PLOT_AVERAGE_SATISFACTION, PLOT_SALARY_DEVIATION)
+    data_manipulation.feature_engineering(df, PLOT_AVERAGE_SATISFACTION, PLOT_SALARY_DEVIATION)
 
 # Update lists with categorical and numeric feature names:
 categorical_feature_names, numerical_feature_names = \
     data_exploration.split_categorical_numerical(df)
 
-########################################################################
-
-# CORRELATION VALUES FOR INITAL FEATURE SELECTION
-
-# Convert attrition labels to 1s and 0s:
-attritionCodes = (df["Attrition"].astype('category')).cat.codes
-print("\n\nAttrition Codes:")
-print(attritionCodes)
-
-
-# Use corwith to measure the linear relationship between the numerical features
-# as a light guide to cross check with observations from plots
-# It is univariate and works only with numeric data
-correlationWithAttrition = abs(df[numerical_feature_names].corrwith(attritionCodes))
-print(correlationWithAttrition.sort_values(ascending=False))
 
 ########################################################################
 
-# DATA MANIPULATION - DROPPING FEATURES AFTER DATA EXPLORATION
-print(df.columns)
-df = data_manipulation.dropFeatures(df)
+# DATA MANIPULATION -
+# FEATURE SELECTION
+
+# Use corwith to measure the linear relationship between
+# the numerical features and attrition.
+# Serves as a guide to cross check with observations from data exploration.
+# It is univariate and works only with numeric data.
+
+
+if CHECK_LINEAR_CORRELATION:
+    # Convert attrition labels to 1s and 0s:
+    attrition_codes = (df["Attrition"].astype('category')).cat.codes
+    print("\n\nAttrition Codes:")
+    print(attrition_codes)
+
+    # Compute correlation coefficients.
+    correlation_with_attrition = abs(df[numerical_feature_names].corrwith(attrition_codes))
+    print(correlation_with_attrition.sort_values(ascending=False))
+
+
+# Drop features based on data exploration and correlation coefficients:
+# Explanation of drops in function:
+df = data_manipulation.drop_features(df)
 # update the cat and num feature names lists
 categorical_feature_names, numerical_feature_names = \
     data_exploration.split_categorical_numerical(df)
-#print(df.columns)
+
 
 ########################################################################
 
