@@ -20,10 +20,13 @@ from imblearn.over_sampling import SMOTE
 def redefine_features(categorical_feature_names_, numerical_feature_names_):
     """ Adding features that were initially incorrectly classified as
     numerical (due to their variable type) over to the categorical list. """
-    #print(categorical_feature_names_)
-    #print(numerical_feature_names_)
-    print("\nlen(categorical_feature_names_), len(numerical_feature_names_) ")
-    print(len(categorical_feature_names_), len(numerical_feature_names_))
+
+    print("\nRedefining categorical and numerical features:")
+    print("\n# categorical, # numerical ")
+    print(
+        " Before: ",
+        len(categorical_feature_names_), ",", len(numerical_feature_names_)
+    )
     # List of categorical features that are in "numerical_feature_names_" just because
     # they were pre-encoded in the dataset
     move_to_categorical = ['Education', 'EnvironmentSatisfaction', 'JobInvolvement',
@@ -32,7 +35,10 @@ def redefine_features(categorical_feature_names_, numerical_feature_names_):
     for feature_name in move_to_categorical:
         numerical_feature_names_.remove(feature_name)
         categorical_feature_names_.append(feature_name)
-    print(len(categorical_feature_names_), len(numerical_feature_names_))
+    print(
+        " After: ",
+        len(categorical_feature_names_), ",", len(numerical_feature_names_)
+    )
 
     return categorical_feature_names_, numerical_feature_names_
 
@@ -43,14 +49,14 @@ def redefine_features(categorical_feature_names_, numerical_feature_names_):
 
 def build_pipeline(categorical_feature_names_, numerical_feature_names_,onehot_drop_):
     """" Building the pipeline for all classification operations.
-      The pipeline includes further preprocessing of the dataframe, x_df
+      The pipeline includes further preprocessing of the dataframe, x_df,
       and oversampling. """
     # Define the numerical pipeline
     numerical_pipeline_ = Pipeline([
         ('scaler', StandardScaler())  # Numerical feature scaling
     ])
 
-    # First, we define the preprocessing steps in the preprocessor object.
+    # Define the preprocessing steps in the preprocessor object.
     # It consists of a ColumnTransformer with two transformers:
     # numerical_pipeline_ for scaling numerical features and OneHotEncoder()
     # for one-hot encoding categorical features.
@@ -77,6 +83,7 @@ def build_pipeline(categorical_feature_names_, numerical_feature_names_,onehot_d
 
 def check_x_transformed(x_df_,preprocessor_, numerical_feature_names_,XDF_TRANSFORMED_REPORT_): # pylint: disable=invalid-name.
     """ Have a look at the data after it has been transformed. """
+    # First transform the data using the preprocessor
     x_transformed = preprocessor_.fit_transform(x_df_)
     print("Transformed Data:")
     # Get the encoded feature names

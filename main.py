@@ -19,9 +19,9 @@ import src.classification_models as classification_models
 
 
 ###################################
-# Boolean switches
+#         Boolean switches
 ###################################
-# Data Exploration:
+#         Data Exploration:
 DO_PROF_REPORTS = False # generate profile reports
 DO_UNIVARIATE_PLOTS = False # make and save all univariate plots of features for yes/no attrition
 DO_BIVARIATE_CATEGORICAL_PLOTS = False # do specific bivariate plots with 2xCategorical features
@@ -33,23 +33,25 @@ DO_MISC_PLOTS = False # Extra space for making miscellaneous plots
 ###################################
 #        Data Manipulation:
 # Feature Engineering:
-PLOT_AVERAGE_SATISFACTION = False # Plot new feature, AverageSatisfaction 
+PLOT_AVERAGE_SATISFACTION = False # Plot new feature, AverageSatisfaction
 PLOT_SALARY_DEVIATION = False # Plot new feature, SalaryDeviation
 # Feature Selection:
 CHECK_LINEAR_CORRELATION = False # calculate and print linear correlation of
 #                               numerical features and attrition
-
-
-TEST_DROPS = False # try dropping some features from the data set
+DROP_FOREST_FEATURES = True # try dropping some features from the data set based
+#                              on the results from an early random forest feature importance run
 #
-VIEW_XDF_TRANSFORMED = False # look at x_df after it has been transformed in the pipeline
-XDF_TRANSFORMED_REPORT = False # generate a profile report of the transformed x_df
 ###################################
+#      Classification Models:
 # Pipeline building:
-
-# Set to 'first' when wanting to drop the first column
+# ONEHOT_DROP: Set to 'first' when wanting to drop the first column
 # during one hot encoding, otherwise = None:
-ONEHOT_DROP = None # 'first'
+ONEHOT_DROP = None # 'first', explained above
+VIEW_XDF_TRANSFORMED = False # look at x_df after it's been preprocessed/transformed in the pipeline
+XDF_TRANSFORMED_REPORT = False # generate a profile report of the transformed x_df
+
+
+
 ###################################
 # Running classification models:
 DO_ROC_ANALYSIS = True # perform roc analysis of each classifier
@@ -62,7 +64,7 @@ df = pd.read_csv('data/Crayon_case_employee-attrition.csv')
 ########################################################################
 
 # DATA EXPORATION -
-# GENERATE PROFILE REPORTS AND DROPPING FIRST FEATURES
+# GENERATE PROFILE REPORTS AND INITIAL FEATURE SELECTION (1/3)
 
 if DO_PROF_REPORTS:
     # Split based on attrition yes/no then generate profile reports.
@@ -137,7 +139,7 @@ categorical_feature_names, numerical_feature_names = \
 ########################################################################
 
 # DATA MANIPULATION -
-# FEATURE SELECTION
+# FEATURE SELECTION (2/3)
 
 # Use corwith to measure the linear relationship between
 # the numerical features and attrition.
@@ -166,27 +168,26 @@ categorical_feature_names, numerical_feature_names = \
 
 ########################################################################
 
-# CLASSIFICATION MODELS
-#
-# SPLIT INTO TARGET (y_df) AND FEATURES (x_df)
+# DATA MANIPULATION -
+# PREPARATION FOR CLASSIFICATION MODELS
 
-# save features into x_df
+# Split into target (y_df) and features (x_df)
+
+# Save all remaining features into x_df
 x_df = df.drop("Attrition", axis=1)
 
 # Update categorical features list
 categorical_feature_names.remove('Attrition')
-#print(categorical_feature_names)
 
-# save target into y_df
+# Save target into y_df
 y_df = df["Attrition"]
 
 
-# encode target variable into 0s and 1s rather than Yes or Nos
+# Encode target variable into 0s and 1s rather than Yes or No
 # (numeric labels)
 
 label_encoder = LabelEncoder()
 y_df = label_encoder.fit_transform(y_df)
-
 
 # Redefine categorical and numerical feature names so they are based on
 # whether they are actually categorical and numerical rather than on their
@@ -197,24 +198,32 @@ categorical_feature_names, numerical_feature_names = \
 
 ########################################################################
 
-# BUILD PIPELINE FOR ENCODING, SCALING AND FEATURE SELECTION
+# DATA MANIPULATION -
+# FURTHER FEATURE SELECTION (3/3)
+# BASED ON RANDOM FOREST CLASSIFICATION RESULTS
 
-if TEST_DROPS:
+if DROP_FOREST_FEATURES:
     # Test drops based on random forest feature importance
-    removeThese = ["EducationField", "Education", "RelationshipSatisfaction",
+    remove_these = ["EducationField", "Education", "RelationshipSatisfaction",
                 "JobSatisfaction", "WorkLifeBalance", "JobInvolvement"]
     print(x_df.columns)
-    for featureName in removeThese:
-        x_df = x_df.drop([featureName], axis=1)
-        categorical_feature_names.remove(featureName)
+    for feature_name in remove_these:
+        x_df = x_df.drop([feature_name], axis=1)
+        categorical_feature_names.remove(feature_name)
+
+
+########################################################################
+
+# CLASSIFICATION MODELS -
+# BUILD PIPELINE: ENCODING, SCALING AND FEATURE SELECTION
 
 # build pipeline
 pipeline, preprocessor = \
     classification_models.build_pipeline(
         categorical_feature_names, numerical_feature_names, ONEHOT_DROP
-        )
+    )
 
-# Take a look at x_df after the transformation step:
+# Take a look at x_df after the preprocessor step:
 if VIEW_XDF_TRANSFORMED:
     # Set the display option to show all rows
     pd.set_option('display.max_rows', None)
@@ -222,7 +231,8 @@ if VIEW_XDF_TRANSFORMED:
     pd.set_option('display.max_columns', None)
     classification_models.check_x_transformed(
         x_df, preprocessor, numerical_feature_names, XDF_TRANSFORMED_REPORT
-        )
+    )
+
 
 
 # select classifiers and hyperparameters with an array:
@@ -298,6 +308,7 @@ for i, classifier in enumerate(classifiers):
     # if we're at the randomforestclassifier, get the feature importances:
     print("\n\n\n\n trying feature importance \n\n\n")
 
+    # Second feature importance from random forest
     if isinstance(classifier, RandomForestClassifier):
         print("Feature Importance:")
         importance_df = classification_models.random_forest_importance( # pylint: disable=invalid-name.
