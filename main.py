@@ -54,7 +54,8 @@ XDF_TRANSFORMED_REPORT = False # generate a profile report of the transformed x_
 
 ###################################
 # Running classification models:
-DO_ROC_ANALYSIS = True # perform roc analysis of each classifier
+DO_ROC_ANALYSIS = False # perform roc analysis of each classifier
+DO_FEATURE_IMPORTANCE = False # Use random forest to get feature importance
 ###################################
 
 
@@ -182,7 +183,6 @@ categorical_feature_names.remove('Attrition')
 # Save target into y_df
 y_df = df["Attrition"]
 
-
 # Encode target variable into 0s and 1s rather than Yes or No
 # (numeric labels)
 
@@ -215,7 +215,7 @@ if DROP_FOREST_FEATURES:
 ########################################################################
 
 # CLASSIFICATION MODELS -
-# BUILD PIPELINE: ENCODING, SCALING AND FEATURE SELECTION
+# BUILD PIPELINE: ENCODING & SCALING
 
 # build pipeline
 pipeline, preprocessor = \
@@ -234,25 +234,35 @@ if VIEW_XDF_TRANSFORMED:
     )
 
 
-
-# select classifiers and hyperparameters with an array:
+# Select classifiers and hyperparameters with an array:
 # 0: logistic regression, 1: KNN, 2: randomForest, 3: SVC   -- e.g. [1,3] KNN+SVC
-#classifiers, hyperparameters = getClassAndHyp(models_=[0,1,2,3])
-classifiers, hyperparameters = classifiers_and_hyperparams.getClassAndHyp(models_=[2])
+#classifiers, hyperparameters = get_class_config(models_=[0,1,2,3])
+classifiers, hyperparameters = \
+    classifiers_and_hyperparams.get_classifiers_config(models_=[2])
 
 
 print("\n\n\n\nRunning now")
 roc_data = []
-reportData = []
+report_data = []
 for i, classifier in enumerate(classifiers):
+
+    ######################################
+    # Set up pipeline
+
     print(f"Classifier: {classifier.__class__.__name__}")
     pipeline.set_params(classification=classifier)  # Set the current classifier
     print(i,pipeline,hyperparameters[i])
 
+
+    ######################################
+    # Find best hyper params:
+
     # Define the grid search with the classifier's hyperparameters and cross-validation
     scoring_type = precision_score # precision_score, f1_score, recall_score
-    grid_search =GridSearchCV(pipeline, hyperparameters[i], scoring=make_scorer(scoring_type), cv=5)
 
+    grid_search =GridSearchCV(
+        pipeline, hyperparameters[i], scoring=make_scorer(scoring_type), cv=5
+    )
 
     # Perform grid search to find the best hyperparameters
     grid_search.fit(x_df, y_df)
@@ -260,17 +270,26 @@ for i, classifier in enumerate(classifiers):
     # Get the best classifier with tuned hyperparameters
     best_classifier = grid_search.best_estimator_
 
-    print("\n\n\n")
+    print("\n\n\nBest Classifier:")
+    # best_classifier is a pipeline object, so use the named_steps attribute
+    # to print just the classifier information as opposed to the whole pipeline
+    print(best_classifier.named_steps['classification'])
 
-    print(best_classifier)
+
+    ######################################
+    # Classification Report & Scoring
 
     # Perform cross-validation and get predicted labels using the best classifier
     y_pred = cross_val_predict(best_classifier, x_df, y_df, cv=5)
     print(y_pred)
-    report = classification_report(y_df, y_pred, output_dict=True)  # Generate classification report
-    #report = classification_report(y_df, y_pred)  # Generate classification report
-    print(report)
-    # get the statistical fluctuations of the scores
+
+    # Generate classification report as a dict for saving:
+    report = classification_report(y_df, y_pred, output_dict=True)
+
+    # Print classification report for reading in the terminal:
+    print(classification_report(y_df, y_pred))
+
+    # Get the statistical fluctuations of the scores
     scores = cross_val_score(best_classifier, x_df, y_df, cv=5, scoring=make_scorer(scoring_type))
     precision_std = np.std(scores)
 
@@ -278,15 +297,19 @@ for i, classifier in enumerate(classifiers):
     print("Mean Precision score:", np.mean(scores))
     print("Standard Deviation of Precision:", precision_std)
 
-    print("")
+    report_data.append((classifier.__class__.__name__, report, best_classifier))
 
-    reportData.append((classifier.__class__.__name__, report, best_classifier))
 
+    ######################################
     # ROC Analysis
+
     if DO_ROC_ANALYSIS:
         # Perform ROC curve analysis using the best classifier
-        y_scores = \
-            cross_val_predict(best_classifier, x_df, y_df, cv=5, method='predict_proba')[:, 1]
+        y_scores = cross_val_predict(
+            best_classifier, x_df, y_df, cv=5, method='predict_proba'
+        )[:, 1]
+
+        # False and True positive rates:
         fpr, tpr, thresholds = roc_curve(y_df, y_scores, pos_label=1)
         auc = roc_auc_score(y_df, y_scores)
         roc_data.append((fpr, tpr, thresholds, classifier.__class__.__name__, auc))
@@ -303,22 +326,21 @@ for i, classifier in enumerate(classifiers):
         print("Mean AUC score:", np.mean(scores))
 
 
-    #############################################
+    ######################################
+    # Feature importances (random forest only)
 
-    # if we're at the randomforestclassifier, get the feature importances:
-    print("\n\n\n\n trying feature importance \n\n\n")
+    if DO_FEATURE_IMPORTANCE:
+        print("\n\n\n\n Feature importance: \n\n\n")
 
-    # Second feature importance from random forest
-    if isinstance(classifier, RandomForestClassifier):
-        print("Feature Importance:")
-        importance_df = classification_models.random_forest_importance( # pylint: disable=invalid-name.
-            classifier, numerical_feature_names, pipeline, preprocessor, x_df, y_df
-            )
-        classification_models.plot_ranfor_importance(importance_df)
+        # Second feature importance from random forest
+        if isinstance(classifier, RandomForestClassifier):
+            print("Feature Importance:")
+            importance_df = classification_models.random_forest_importance( # pylint: disable=invalid-name.
+                classifier, numerical_feature_names, pipeline, preprocessor, x_df, y_df
+                )
+            classification_models.plot_ranfor_importance(importance_df)
 
-    #############################################
+if DO_ROC_ANALYSIS:
+    classification_models.plot_ROC(roc_data)
 
-classification_models.plot_ROC(roc_data)
-
-#print(reportData)
-quit()
+#print(report_data)
